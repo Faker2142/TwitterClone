@@ -10,12 +10,9 @@ import Firebase
 
 class RegistrationController: UIViewController {
     
-    
     //MARK: - Properties
-    
     private let imagePicker = UIImagePickerController()
     private var profileImage: UIImage?
-    
     private let registrationButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Sign Up", for: .normal)
@@ -27,7 +24,6 @@ class RegistrationController: UIViewController {
         button.addTarget(self, action: #selector(handleRegistration), for: .touchUpInside)
         return button
     }()
-    
     private let plusPhotoButton: UIButton = {
         let button = UIButton(type: .system)
         button.contentMode = .scaleAspectFit
@@ -36,97 +32,73 @@ class RegistrationController: UIViewController {
         button.addTarget(self, action: #selector(handleAddProfilePhoto), for: .touchUpInside)
         return button
     }()
-    
     //лого на строчке email, + утилита
     private lazy var emailContainerView: UIView = {
         let image = UIImage(named: "ic_mail_outline_white_2x-1")
         let view = Utilities().inputContainerView(withImage: image!, textField: emailTextField)
-        
         return view
     }()
     //лого на строчке password
     private lazy var passwordContainerView: UIView = {
         let image = UIImage(named: "ic_lock_outline_white_2x")
         let view = Utilities().inputContainerView(withImage: image!, textField: passwordTextField)
-        
         return view
     }()
-    
     private lazy var fullnameContainerView: UIView = {
         let image = UIImage(named: "ic_person_outline_white_2x")
         let view = Utilities().inputContainerView(withImage: image!, textField: fullnameTextField)
-        
         return view
     }()
     private lazy var usernameContainerView: UIView = {
         let image = UIImage(named: "ic_person_outline_white_2x")
         let view = Utilities().inputContainerView(withImage: image!, textField: usernameTextField)
-        
         return view
     }()
-    
     private let emailTextField : UITextField = {
         let tf = Utilities().textField(withPlaceholder: "Email")
         return tf
     }()
-    
     private let passwordTextField : UITextField = {
         let tf = Utilities().textField(withPlaceholder: "Password")
         tf.isSecureTextEntry = true
         return tf
     }()
-    
-    
-    
     private let fullnameTextField : UITextField = {
         let tf = Utilities().textField(withPlaceholder: "Full Name")
         return tf
     }()
-    
     private let usernameTextField : UITextField = {
         let tf = Utilities().textField(withPlaceholder: "Username")
         return tf
     }()
-    
     private let alreadyHaveAccountButton: UIButton = {
         let button = Utilities().attributedButton("Already have an account ? ", "Log In")
         button.addTarget(RegistrationController.self, action: #selector(handleShowLogin), for: .touchUpInside)
         return button
     }()
-    
-    
-    
+
     //MARK: - Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
     }
-    
     //MARK: - Selectors
-    
     @objc func handleShowLogin() {
         navigationController?.popViewController(animated: true)
     }
-    
     @objc func handleAddProfilePhoto() {
         present(imagePicker, animated: true, completion: nil)
     }
-    
     //Создание аккаунта
     @objc func handleRegistration() {
-        
         guard let profileImage = profileImage else {
             print("DEBUG: Пожалуйста, загрузите фото")
             return
         }
-        
         guard let email = emailTextField.text else {return}
         guard let password = passwordTextField.text else {return}
         guard let username = usernameTextField.text else {return}
-        guard let fullname = fullnameTextField.text else {return}
-        
-        
+
         guard let imageData = profileImage.jpegData(compressionQuality: 0.5) else {return}
         
         let filename = NSUUID().uuidString
@@ -142,7 +114,6 @@ class RegistrationController: UIViewController {
                         print("DEBUG: Error is\(error.localizedDescription)")
                         return
                     }
-                    
                     guard let uid = result?.user else {return}
                     
                     let values = ["email":email,
@@ -150,9 +121,7 @@ class RegistrationController: UIViewController {
                                   "fullname": fullname,
                                   "uid": uid.uid,
                                   "profileImageUrl": profileImageUrl]
-                    
-                    
-                    
+
                     Firestore.firestore()
                         .collection("users")
                         .document(uid.uid)
@@ -171,13 +140,8 @@ class RegistrationController: UIViewController {
         }
         
     }
-    
-    
-    
-    
-    
+
     //MARK: - Helpers
-    
     func configureUI() {
         view.backgroundColor = .twitterBlue
         
@@ -201,12 +165,9 @@ class RegistrationController: UIViewController {
         
         view.addSubview(alreadyHaveAccountButton)
         alreadyHaveAccountButton.anchor(left: view.leftAnchor, bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingLeft: 40, paddingRight: 40)
-        
     }
 }
-
 //MARK: - UIImagePickerControllerDelegate
-
 //add media
 extension RegistrationController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -225,8 +186,5 @@ extension RegistrationController: UIImagePickerControllerDelegate, UINavigationC
         self.plusPhotoButton.setImage(profileImage.withRenderingMode(.alwaysOriginal), for: .normal)
         
         dismiss(animated: true)
-        
-        
-    }
-    
+    }    
 }
