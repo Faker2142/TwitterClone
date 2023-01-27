@@ -83,62 +83,35 @@ class RegistrationController: UIViewController {
         configureUI()
     }
     //MARK: - Selectors
-    @objc func handleShowLogin() {
-        navigationController?.popViewController(animated: true)
-    }
     @objc func handleAddProfilePhoto() {
         present(imagePicker, animated: true, completion: nil)
     }
-    //Создание аккаунта
+    
     @objc func handleRegistration() {
         guard let profileImage = profileImage else {
-            print("DEBUG: Пожалуйста, загрузите фото")
+            print("DEBUG: Please select a profile image..")
             return
         }
-        guard let email = emailTextField.text else {return}
-        guard let password = passwordTextField.text else {return}
-        guard let username = usernameTextField.text else {return}
-
-        guard let imageData = profileImage.jpegData(compressionQuality: 0.5) else {return}
+        guard let email = emailTextField.text else { return }
+        guard let password = passwordTextField.text else { return }
+        guard let fullname = fullnameTextField.text else { return }
+        guard let username = usernameTextField.text?.lowercased() else { return }
         
-        let filename = NSUUID().uuidString
-        let ref = STORAGE_PROFILE_IMAGES.child(filename)
+        let credentials = AuthCredentials(email: email, password: password, fullname: fullname,
+                                          username: username, profileImage: profileImage)
         
-        ref.putData(imageData, metadata: nil) {_, error in
+        AuthService.shared.registerUser(credentials: credentials) { (error, ref) in
+            guard let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+            guard let tab = window.rootViewController as? MainTabController else { return }
             
-            ref.downloadURL { imageUrl, _ in
-                guard let profileImageUrl = imageUrl?.absoluteString else {return}
-                
-                Auth.auth().createUser(withEmail: email, password: password) { (result, error) in
-                    if let error = error {
-                        print("DEBUG: Error is\(error.localizedDescription)")
-                        return
-                    }
-                    guard let uid = result?.user else {return}
-                    
-                    let values = ["email":email,
-                                  "username": username,
-                                  "fullname": fullname,
-                                  "uid": uid.uid,
-                                  "profileImageUrl": profileImageUrl]
-
-                    Firestore.firestore()
-                        .collection("users")
-                        .document(uid.uid)
-                        .setData(values) { _ in
-                            print("DEBUG: Did upload user data..")
-                        }
-                    
-                   // REF_USERS.child(uid).updateChildValues(values) { (error, ref) in
-                      //  print("DEBUG: Пользователь успешно добавлен")
-                   // }
-                    
-                }
-                
-            }
+            tab.authenticateUserAndConfigureUI()
             
+            self.dismiss(animated: true, completion: nil)
         }
-        
+    }
+    
+    @objc func handleShowLogin() {
+        navigationController?.popViewController(animated: true)
     }
 
     //MARK: - Helpers
@@ -148,23 +121,28 @@ class RegistrationController: UIViewController {
         imagePicker.delegate = self
         imagePicker.allowsEditing = true
         
-        view.addSubview(alreadyHaveAccountButton)
-        alreadyHaveAccountButton.anchor(left: view.leftAnchor, bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingLeft: 40, paddingRight: 40)
-        
         view.addSubview(plusPhotoButton)
         plusPhotoButton.centerX(inView: view, topAnchor: view.safeAreaLayoutGuide.topAnchor)
         plusPhotoButton.setDimensions(width: 128, height: 128)
         
-        let stack = UIStackView(arrangedSubviews: [emailContainerView, passwordContainerView, fullnameContainerView, usernameContainerView, registrationButton])
-        stack.axis = .vertical //ось
+        let stack = UIStackView(arrangedSubviews: [emailContainerView,
+                                                   passwordContainerView,
+                                                   fullnameContainerView,
+                                                   usernameContainerView,
+                                                   registrationButton])
+        stack.axis = .vertical
         stack.spacing = 20
         stack.distribution = .fillEqually
         
         view.addSubview(stack)
-        stack.anchor(top: plusPhotoButton.bottomAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 32, paddingLeft: 32, paddingRight: 32)
+        stack.anchor(top: plusPhotoButton.bottomAnchor, left: view.leftAnchor,
+                     right: view.rightAnchor, paddingTop: 32,
+                     paddingLeft: 32, paddingRight: 32)
         
         view.addSubview(alreadyHaveAccountButton)
-        alreadyHaveAccountButton.anchor(left: view.leftAnchor, bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingLeft: 40, paddingRight: 40)
+        alreadyHaveAccountButton.anchor(left: view.leftAnchor,
+                                     bottom: view.safeAreaLayoutGuide.bottomAnchor,
+                                     right: view.rightAnchor, paddingLeft: 40, paddingRight: 40)
     }
 }
 //MARK: - UIImagePickerControllerDelegate
